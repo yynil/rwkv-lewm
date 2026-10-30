@@ -1,0 +1,13 @@
+defaults:
+  - pusht_stage2
+  - _self_
+
+output_dir: outputs/pusht_latent_adaln_predproj_stage2
+resume_from: outputs/pusht_latent_adaln_predproj_stage1/rwkv_lewm_epoch_2.pt
+
+model:
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: lewm_pred_proj
+  action_modulation: adaln_zero
+  token_fusion: latent_only

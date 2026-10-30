@@ -1,0 +1,20 @@
+defaults:
+  - pusht_rwkv_v14_current_action_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v15_block_transition_stage1_ds
+resume_from: null
+
+model:
+  # Current-action-only semantics:
+  # RWKV blocks encode observation history; after each block, the current action
+  # applies a small bounded AdaLN residual to the real final state token.
+  action_transition_type: none
+  block_action_transition_type: adaln
+  block_action_transition_hidden_scale: 4
+  block_action_transition_residual_scale: 0.1
+  block_action_transition_bounded: true
+  block_action_transition_max_scale: 0.05
+  block_action_transition_max_shift: 0.05
+  block_action_transition_gate_tanh: true
+  block_action_transition_target: last

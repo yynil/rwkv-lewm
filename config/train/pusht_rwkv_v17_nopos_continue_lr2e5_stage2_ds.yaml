@@ -1,0 +1,20 @@
+defaults:
+  - pusht_rwkv_v17_nopos_stage2_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_nopos_continue_lr2e5_stage2_ds
+resume_from: outputs/pusht_rwkv_v17_nopos_stage2_ds/epoch_10
+
+trainer:
+  # Continue the no-pos run for 10 more epochs. Epoch numbers in this output
+  # directory are relative: epoch_1 means original epoch_11.
+  max_epochs: 10
+  max_steps: null
+  gradient_clip_val: 1.0
+
+optimizer:
+  # Loss is still useful, but it has started to flatten; continue with a lower
+  # LR to reduce overshooting while checking MPC success frequently.
+  lr: 2e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.95]

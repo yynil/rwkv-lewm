@@ -1,0 +1,57 @@
+defaults:
+  - pusht_stage2
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v8_rollout_stage2_ds
+resume_from: outputs/pusht_rwkv_v8_rollout_stage1_ds/epoch_2
+
+model:
+  backend: rwkv7_cuda
+  embed_dim: 192
+  dynamics_dim: 384
+  dynamics_layers: 6
+  dropout: 0.1
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: direct
+  action_modulation: none
+  token_fusion: concat_action
+  normalize_embeddings: true
+  rollout_history_size: 3
+
+data:
+  # Six frames give z0..z5, matching PushT MPC's 5 action-block horizon.
+  num_steps: 6
+
+loader:
+  batch_size: 32
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  # Stage 1 remains a 2-epoch LeWM-context warmup; stage 2 uses rollout loss.
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.95]
+
+loss:
+  mode: lewm_context_rollout
+  history_size: 3
+  num_preds: 1
+  rollout_start_size: 1
+  rollout_horizon: 5
+  teacher_weight: 1.0
+  rollout_weight: 1.0
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024
+

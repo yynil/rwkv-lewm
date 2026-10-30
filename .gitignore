@@ -1,0 +1,17 @@
+.venv/
+.uv-cache/
+__pycache__/
+*.pyc
+outputs/
+logs/
+wandb/
+.pytest_cache/
+*.egg-info/
+.torch-extensions/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+*.zst
+*.tar

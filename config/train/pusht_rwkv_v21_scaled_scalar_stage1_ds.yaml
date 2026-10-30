@@ -1,0 +1,15 @@
+defaults:
+  - pusht_rwkv_v17_nopos_prednone_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v21_scaled_scalar_stage1_ds
+resume_from: null
+
+model:
+  # Minimal change from v17-nopos-prednone: keep x_t = z_t + a_t, but learn one
+  # scalar action strength alpha initialized to 1.
+  token_fusion: scaled_add_action
+  scaled_action_scale_init: 1.0
+  scaled_action_per_channel_scale: false
+  pred_proj_norm: none
+  use_sequence_pos_embedding: false

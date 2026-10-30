@@ -1,0 +1,12 @@
+defaults:
+  - pusht_rwkv_v17_nopos_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_nopos_predln_stage1_ds
+resume_from: null
+
+model:
+  # Keep the v17-nopos encoder projector as LeWM-style BatchNorm, but remove
+  # BatchNorm from the prediction head to test planning-cost sensitivity.
+  projector_norm: batchnorm
+  pred_proj_norm: layernorm

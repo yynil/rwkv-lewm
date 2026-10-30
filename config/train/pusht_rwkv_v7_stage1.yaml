@@ -1,0 +1,27 @@
+defaults:
+  - pusht_stage1
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v7_stage1
+resume_from: null
+
+model:
+  dynamics_dim: 192
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: lewm_pred_proj
+  action_modulation: none
+  action_modulation_scope: full
+  action_modulate_ffn: false
+  action_residual_gate: none
+  token_fusion: interleave_action
+  use_token_type_embeddings: true
+  normalize_embeddings: false
+  rollout_history_size: 3
+  modulate_v_first: false
+  rwkv_output_init_scale: 0.5
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.999]

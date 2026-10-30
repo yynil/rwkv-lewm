@@ -1,0 +1,18 @@
+defaults:
+  - pusht_rwkv_v13b_final_transition_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v14_current_action_stage1_ds
+resume_from: null
+
+loss:
+  # Train only the final transition in each sampled window:
+  # RWKV(z0,z1,z2) + action a2 -> z3. Previous raw actions are not used.
+  mode: current_action_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

@@ -1,0 +1,12 @@
+defaults:
+  - pusht_rwkv_v17_add_action_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v19_ref_pos_stage1_ds
+resume_from: null
+
+model:
+  # Match xiaol/leworldmodel-rwkv's RWKV7Predictor output path: RWKV norm output
+  # goes directly into LeWM pred_proj when hidden_dim == output_dim.
+  rwkv_output_head_type: identity
+  use_sequence_pos_embedding: true

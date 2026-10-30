@@ -1,0 +1,24 @@
+defaults:
+  - pusht_rwkv_v11_bounded_kv_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v11_bounded_kv_stage2_ds
+resume_from: outputs/pusht_rwkv_v11_bounded_kv_stage1_ds/epoch_2
+
+data:
+  num_steps: 4
+
+trainer:
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0
+
+loss:
+  mode: lewm_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

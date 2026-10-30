@@ -1,0 +1,18 @@
+defaults:
+  - pusht_stage2
+  - _self_
+
+output_dir: outputs/pusht_lewmalign_v2_stage2
+resume_from: outputs/pusht_lewmalign_v2_stage1/rwkv_lewm_epoch_2.pt
+
+model:
+  residual_prediction: false
+  action_encoder_type: lewm
+  normalize_embeddings: false
+  rollout_history_size: 3
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.999]
+

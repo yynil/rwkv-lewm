@@ -1,0 +1,16 @@
+defaults:
+  - pusht_rwkv_v17_nopos_predln_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v20_learned_add_stage1_ds
+resume_from: null
+
+model:
+  # v20 keeps v17's successful input-side action fusion, but replaces the
+  # hard-coded z + action identity path with learned state/action projections.
+  token_fusion: learned_add_action
+  learned_action_scale_init: 1.0
+  learned_action_per_channel_scale: false
+  learned_action_normalize_streams: true
+  pred_proj_norm: layernorm
+  use_sequence_pos_embedding: false

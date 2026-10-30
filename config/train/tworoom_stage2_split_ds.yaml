@@ -1,0 +1,9 @@
+defaults:
+  - tworoom_stage2_ds
+  - _self_
+
+output_dir: outputs/tworoom_train_stage2_ds
+resume_from: outputs/tworoom_train_stage1_ds/epoch_2
+
+data:
+  name: tworoom_train

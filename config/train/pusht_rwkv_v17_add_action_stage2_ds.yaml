@@ -1,0 +1,26 @@
+defaults:
+  - pusht_rwkv_v17_add_action_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_add_action_stage2_ds
+resume_from: outputs/pusht_rwkv_v17_add_action_stage1_ds/epoch_2
+
+data:
+  num_steps: 4
+
+trainer:
+  # The reference fork reports PushT RWKV at epoch 9, so keep epoch_9/10
+  # checkpoints for direct comparison instead of stopping at 8.
+  max_epochs: 10
+  max_steps: null
+  gradient_clip_val: 1.0
+
+loss:
+  mode: lewm_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

@@ -1,0 +1,20 @@
+defaults:
+  - tworoom_stage1
+  - _self_
+
+output_dir: outputs/tworoom_stage1_ds
+resume_from: null
+
+loader:
+  # DeepSpeed uses this as per-GPU micro-batch. 32 * 4 GPUs = 128,
+  # matching the original LeWM global batch size.
+  batch_size: 32
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  max_epochs: 2
+  max_steps: null
+  gradient_clip_val: 1.0

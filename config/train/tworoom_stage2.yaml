@@ -1,0 +1,45 @@
+defaults:
+  - rwkv_lewm
+  - _self_
+
+output_dir: outputs/tworoom_stage2
+resume_from: outputs/tworoom_stage1/rwkv_lewm_epoch_2.pt
+
+data:
+  name: tworoom
+  img_size: 224
+  action_dim: 2
+  frameskip: 5
+  # Match original LeWM: history_size=3, num_preds=1.
+  num_steps: 4
+  keys_to_load:
+    - pixels
+    - action
+    - proprio
+  keys_to_cache:
+    - action
+    - proprio
+
+loader:
+  batch_size: 4
+  num_workers: 4
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.95]
+
+loss:
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

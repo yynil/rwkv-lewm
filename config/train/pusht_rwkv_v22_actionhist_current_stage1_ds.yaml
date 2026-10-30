@@ -1,0 +1,19 @@
+defaults:
+  - pusht_rwkv_v17_nopos_prednone_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v22_actionhist_current_stage1_ds
+resume_from: null
+
+model:
+  # v22-a: keep the stable v17 path x_t = z_t + u_t, then add a small learned
+  # causal summary of recent action-block embeddings [u_{t-2}, u_{t-1}, u_t].
+  token_fusion: action_history_add
+  action_history_size: 3
+  action_history_include_current: true
+  action_history_scale_init: 0.1
+  action_history_per_channel_scale: false
+  action_history_hidden_scale: 4
+  action_history_zero_init_output: true
+  pred_proj_norm: none
+  use_sequence_pos_embedding: false

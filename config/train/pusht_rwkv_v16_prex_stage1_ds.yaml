@@ -1,0 +1,29 @@
+defaults:
+  - pusht_rwkv_v15_block_transition_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v16_prex_stage1_ds
+resume_from: null
+
+model:
+  # Dense next-latent training, matching LeWM's causal Transformer loss.
+  # Actions modulate the normalized x input before each RWKV TimeMixer and FFN;
+  # residual branches keep official RWKV behavior without AdaLN zero gates.
+  action_modulation: adaln_zero
+  action_modulation_scope: pre_x
+  action_modulate_ffn: true
+  action_residual_gate: none
+  modulate_v_first: false
+  action_transition_type: none
+  block_action_transition_type: none
+  rwkv_output_init_scale: 0.0
+
+loss:
+  mode: lewm_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

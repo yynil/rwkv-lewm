@@ -1,0 +1,18 @@
+defaults:
+  - pusht_rwkv_v5_stage2
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v5_stage2_ds
+resume_from: outputs/pusht_rwkv_v5_stage1_ds/epoch_2
+
+loader:
+  batch_size: 128
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0

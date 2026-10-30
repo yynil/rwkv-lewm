@@ -1,0 +1,15 @@
+defaults:
+  - pusht_rwkv_v17_nopos_prednone_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v21_scaled_channel_stage1_ds
+resume_from: null
+
+model:
+  # Same as v21 scalar, but alpha is per latent channel. This tests whether the
+  # action embedding needs anisotropic strength while preserving v17 coordinates.
+  token_fusion: scaled_add_action
+  scaled_action_scale_init: 1.0
+  scaled_action_per_channel_scale: true
+  pred_proj_norm: none
+  use_sequence_pos_embedding: false

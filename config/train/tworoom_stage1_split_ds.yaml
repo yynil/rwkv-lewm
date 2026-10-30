@@ -1,0 +1,9 @@
+defaults:
+  - tworoom_stage1_ds
+  - _self_
+
+output_dir: outputs/tworoom_train_stage1_ds
+resume_from: null
+
+data:
+  name: tworoom_train

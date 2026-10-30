@@ -1,0 +1,27 @@
+defaults:
+  - pusht_rwkv_v9_statecond_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v9_statecond_lewmctx_stage2_ds
+resume_from: outputs/pusht_rwkv_v9_statecond_stage1_ds/epoch_2
+
+data:
+  # Isolation run: keep the original LeWM 3-context + 1-target window.
+  num_steps: 4
+
+trainer:
+  # Stage 1 already ran for 2 epochs; this adds the 8-epoch continuation
+  # without changing the LeWM one-step objective.
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0
+
+loss:
+  mode: lewm_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

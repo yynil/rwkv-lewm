@@ -1,0 +1,18 @@
+defaults:
+  - pusht_rwkv_v17_nopos_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v18_adaptive_scalar_stage1_ds
+resume_from: null
+
+model:
+  # v18-a: initialize exactly as v17-nopos (`z + action`) and let a small
+  # nonlinear controller learn a state/action-conditioned scalar alpha.
+  token_fusion: adaptive_add_action_scalar
+  adaptive_action_hidden_scale: 4
+  adaptive_action_alpha_init: 1.0
+  adaptive_action_alpha_delta: 0.5
+  adaptive_action_modulate: false
+  adaptive_action_max_scale: 0.05
+  adaptive_action_max_shift: 0.05
+  use_sequence_pos_embedding: false

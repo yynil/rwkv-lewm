@@ -1,0 +1,18 @@
+defaults:
+  - pusht_rwkv_v10_kv_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v12_adapter_stage1_ds
+resume_from: null
+
+model:
+  # v12 makes the RWKV TimeMix path state-only. Action enters after each RWKV
+  # block through a zero-init, bounded residual adapter.
+  action_modulation_scope: adapter
+  action_modulate_ffn: false
+  action_residual_gate: none
+  modulate_v_first: false
+  action_adapter_residual_scale: 0.1
+  action_adapter_max_scale: 0.05
+  action_adapter_max_shift: 0.05
+  action_adapter_position: pre

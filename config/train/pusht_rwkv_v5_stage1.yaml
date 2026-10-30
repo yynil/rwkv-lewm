@@ -1,0 +1,9 @@
+defaults:
+  - pusht_rwkv_v4_stage1
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v5_stage1
+resume_from: null
+
+model:
+  rwkv_output_init_scale: 0.5

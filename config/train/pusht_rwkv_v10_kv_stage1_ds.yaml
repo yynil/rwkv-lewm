@@ -1,0 +1,16 @@
+defaults:
+  - pusht_rwkv_v9_statecond_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v10_kv_stage1_ds
+resume_from: null
+
+model:
+  # v10 keeps the LeWM-aligned 192-d latent_identity + pred_proj setup, but
+  # removes the action modulation branches that were much larger than LeWM's
+  # Transformer residual modulation. Action only modulates RWKV TimeMix k/v.
+  action_modulation_scope: kv
+  action_modulate_ffn: false
+  action_residual_gate: none
+  action_residual_gate_scale: 0.1
+  modulate_v_first: false

@@ -1,0 +1,16 @@
+defaults:
+  - pusht_rwkv_v10_kv_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v11_bounded_kv_stage1_ds
+resume_from: null
+
+model:
+  # v11 keeps action inside TimeMix k/v, but bounds the FiLM magnitude so the
+  # recurrent write path cannot grow to the 100%+ residual ratios seen in v10.
+  action_modulation_scope: kv_limited
+  action_modulate_ffn: false
+  action_residual_gate: none
+  modulate_v_first: false
+  kv_max_scale: 0.05
+  kv_max_shift: 0.05

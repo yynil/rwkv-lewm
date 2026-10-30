@@ -1,0 +1,61 @@
+defaults:
+  - pusht_stage1
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_add_action_stage1_ds
+resume_from: null
+
+model:
+  # Match xiaol/leworldmodel-rwkv's RWKV predictor: z_t and action_t are
+  # projected to the same width and added before the RWKV stack.
+  backend: rwkv7_cuda
+  embed_dim: 192
+  dynamics_dim: 192
+  dynamics_layers: 11
+  rwkv_ffn_dim: 2048
+  dropout: 0.1
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: lewm_pred_proj
+  action_modulation: none
+  action_modulation_scope: full
+  action_modulate_ffn: false
+  action_residual_gate: none
+  token_fusion: add_action
+  use_sequence_pos_embedding: true
+  max_position_embeddings: 512
+  normalize_embeddings: true
+  rollout_history_size: 3
+  modulate_v_first: false
+  rwkv_output_init_scale: 0.0
+  action_transition_type: none
+  block_action_transition_type: none
+
+loader:
+  # Per-GPU batch 32 under 4-GPU DeepSpeed gives total batch 128, matching the
+  # reference RWKV fork's PushT setup.
+  batch_size: 32
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  max_epochs: 2
+  max_steps: null
+  gradient_clip_val: 1.0
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.95]
+
+loss:
+  mode: lewm_context
+  history_size: 3
+  num_preds: 1
+  sigreg:
+    weight: 0.09
+    kwargs:
+      knots: 17
+      num_proj: 1024

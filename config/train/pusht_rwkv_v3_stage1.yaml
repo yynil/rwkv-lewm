@@ -1,0 +1,21 @@
+defaults:
+  - pusht_stage1
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v3_stage1
+resume_from: null
+
+model:
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: lewm_pred_proj
+  action_modulation: adaln_zero
+  token_fusion: latent_linear
+  normalize_embeddings: false
+  rollout_history_size: 3
+
+optimizer:
+  lr: 5e-5
+  weight_decay: 1e-3
+  betas: [0.9, 0.999]
+

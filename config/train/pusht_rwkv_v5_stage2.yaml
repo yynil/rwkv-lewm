@@ -1,0 +1,9 @@
+defaults:
+  - pusht_rwkv_v4_stage2
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v5_stage2
+resume_from: outputs/pusht_rwkv_v5_stage1/rwkv_lewm_epoch_2.pt
+
+model:
+  rwkv_output_init_scale: 0.5

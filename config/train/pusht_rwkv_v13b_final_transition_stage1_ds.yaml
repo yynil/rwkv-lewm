@@ -1,0 +1,22 @@
+defaults:
+  - pusht_rwkv_v9_statecond_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v13b_final_transition_stage1_ds
+resume_from: null
+
+model:
+  # v13-b keeps the RWKV trajectory backbone state-only. Action is applied only
+  # after the RWKV stack by a final AdaLN-zero transition adapter before pred_proj.
+  action_modulation: none
+  action_modulation_scope: full
+  action_modulate_ffn: false
+  action_residual_gate: none
+  modulate_v_first: false
+  token_fusion: latent_identity
+  action_transition_type: adaln
+  action_transition_hidden_scale: 4
+  action_transition_residual_scale: 1.0
+  action_transition_bounded: false
+  action_transition_gate_tanh: false
+  rwkv_output_init_scale: 0.0

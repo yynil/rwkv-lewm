@@ -1,0 +1,19 @@
+defaults:
+  - pusht_latent_adaln_predproj_stage1
+  - _self_
+
+output_dir: outputs/pusht_latent_adaln_predproj_stage1_ds
+resume_from: null
+
+loader:
+  # 32 * 4 GPUs = 128 global batch, matching the LeWM PushT run.
+  batch_size: 32
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  max_epochs: 2
+  max_steps: null
+  gradient_clip_val: 1.0

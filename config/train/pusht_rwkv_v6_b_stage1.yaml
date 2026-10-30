@@ -1,0 +1,13 @@
+defaults:
+  - pusht_rwkv_v5_stage1
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v6_b_stage1
+resume_from: null
+
+model:
+  action_modulation_scope: rkv
+  action_modulate_ffn: false
+  action_residual_gate: none
+  action_residual_gate_scale: 0.1
+  modulate_v_first: false

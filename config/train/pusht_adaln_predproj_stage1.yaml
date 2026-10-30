@@ -1,0 +1,12 @@
+defaults:
+  - pusht_stage1
+  - _self_
+
+output_dir: outputs/pusht_adaln_predproj_stage1
+resume_from: null
+
+model:
+  residual_prediction: false
+  action_encoder_type: lewm
+  prediction_head_type: lewm_pred_proj
+  action_modulation: adaln_zero

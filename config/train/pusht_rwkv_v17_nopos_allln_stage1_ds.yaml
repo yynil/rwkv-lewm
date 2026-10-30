@@ -1,0 +1,10 @@
+defaults:
+  - pusht_rwkv_v17_nopos_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_nopos_allln_stage1_ds
+resume_from: null
+
+model:
+  projector_norm: layernorm
+  pred_proj_norm: layernorm

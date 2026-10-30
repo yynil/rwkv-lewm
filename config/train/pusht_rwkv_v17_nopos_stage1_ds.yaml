@@ -1,0 +1,11 @@
+defaults:
+  - pusht_rwkv_v17_add_action_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v17_nopos_stage1_ds
+resume_from: null
+
+model:
+  # Pure RWKV temporal ordering: keep add_action fusion but remove the absolute
+  # sequence position embedding used in v17.
+  use_sequence_pos_embedding: false

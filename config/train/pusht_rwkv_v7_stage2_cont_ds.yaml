@@ -1,0 +1,11 @@
+defaults:
+  - pusht_rwkv_v7_stage2_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v7_stage2_cont_ds
+resume_from: outputs/pusht_rwkv_v7_stage2_ds/epoch_8
+
+trainer:
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0

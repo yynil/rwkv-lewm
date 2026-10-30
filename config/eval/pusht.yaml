@@ -1,0 +1,11 @@
+policy: outputs/rwkv_lewm/rwkv_lewm_epoch_10.pt
+plan_config:
+  horizon: 5
+  receding_horizon: 5
+  action_block: 5
+solver:
+  type: cem
+  num_samples: 300
+  n_steps: 30
+  topk: 30
+  var_scale: 1.0

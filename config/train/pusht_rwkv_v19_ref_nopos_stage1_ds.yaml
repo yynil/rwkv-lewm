@@ -1,0 +1,11 @@
+defaults:
+  - pusht_rwkv_v19_ref_pos_stage1_ds
+  - _self_
+
+output_dir: outputs/pusht_rwkv_v19_ref_nopos_stage1_ds
+resume_from: null
+
+model:
+  # RWKV is already temporal; this branch tests the reference architecture
+  # without an extra learned absolute sequence position embedding.
+  use_sequence_pos_embedding: false

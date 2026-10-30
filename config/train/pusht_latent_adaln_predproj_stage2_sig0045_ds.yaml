@@ -1,0 +1,30 @@
+defaults:
+  - pusht_latent_adaln_predproj_stage2
+  - _self_
+
+output_dir: outputs/pusht_latent_adaln_predproj_stage2_sig0045_ds
+resume_from: outputs/pusht_latent_adaln_predproj_stage1_ds/epoch_2
+
+loader:
+  # 32 * 4 GPUs = 128 global batch, matching the LeWM PushT run.
+  batch_size: 32
+  num_workers: 3
+  persistent_workers: true
+  prefetch_factor: 2
+  pin_memory: true
+
+trainer:
+  # Stage 1 has already run for 2 epochs; this adds 8 continuation epochs.
+  max_epochs: 8
+  max_steps: null
+  gradient_clip_val: 1.0
+
+loss:
+  sigreg:
+    # The original 0.09 pushes Stage 2 into high-SIGReg / high-pred-loss plateau
+    # for this RWKV latent-only AdaLN variant. Keep the Gaussian constraint, but
+    # reduce its pressure so prediction quality from Stage 1 is not erased.
+    weight: 0.045
+    kwargs:
+      knots: 17
+      num_proj: 1024
