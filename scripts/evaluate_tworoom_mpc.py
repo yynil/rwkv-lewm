@@ -69,6 +69,18 @@ def load_state_dict(path: Path) -> dict[str, torch.Tensor]:
     return state
 
 
+def load_model_state(model: torch.nn.Module, state: dict[str, torch.Tensor]) -> None:
+    """Load current and legacy TwoRoom checkpoints without changing their math."""
+    input_weight = state.get("dynamics.input_proj.weight")
+    if input_weight is not None and isinstance(model.dynamics.input_proj, torch.nn.Identity):
+        model.dynamics.input_proj = torch.nn.Linear(
+            input_weight.shape[1],
+            input_weight.shape[0],
+            bias="dynamics.input_proj.bias" in state,
+        )
+    model.load_state_dict(state, strict=True)
+
+
 def img_transform(img_size: int):
     return transforms.Compose(
         [
@@ -140,7 +152,7 @@ def main():
     train_cfg = load_train_cfg(args.train_config, args.overrides)
     model = build_model(train_cfg).to(device)
     ckpt = resolve_model_state(args.checkpoint)
-    model.load_state_dict(load_state_dict(ckpt), strict=True)
+    load_model_state(model, load_state_dict(ckpt))
     model.eval().requires_grad_(False)
 
     world = swm.World(

@@ -28,6 +28,18 @@ The repository currently contains complete training and evaluation paths for
 TwoRoom and PushT. Download support is also provided for the official LeWM Cube
 and Reacher datasets, but no RWKV-LeWM results are reported for those tasks yet.
 
+## Architecture at a glance
+
+![Hand-drawn overview of LeWM and RWKV-LeWM](assets/architecture/rwkv-lewm-overview.png)
+
+Both models encode the current and goal images with the same ViT-style visual
+front end, predict future states in latent space, and use CEM to minimize the
+terminal distance to the goal latent. The central replacement is the temporal
+predictor: LeWM uses a causal Transformer with learned positions and layer-wise
+AdaLN-zero action conditioning, whereas this project uses RWKV-v7 recurrence
+with task-specific action fusion. The loss remains next-latent MSE plus `0.09`
+SIGReg.
+
 ## Method
 
 ### Core world model
@@ -79,6 +91,44 @@ starts with scalar `alpha = 0.1`. Two variants are included:
 The corresponding configs are
 `pusht_rwkv_v22_actionhist_{current,past}_{stage1,stage2}_ds.yaml`.
 
+### Task-specific adaptations and Transformer replacement
+
+The experiments are not a pure one-line backbone swap. Context handling,
+action fusion, predictor depth/width, and prediction head also differ, so the
+measured gaps cannot be attributed to RWKV alone.
+
+#### TwoRoom
+
+![Hand-drawn TwoRoom architecture comparison](assets/architecture/tworoom-lewm-vs-rwkv.png)
+
+| Design choice | Official LeWM | RWKV-LeWM TwoRoom |
+| --- | --- | --- |
+| Temporal predictor | 6-layer causal Transformer | 6 RWKV-v7 blocks, width 384 |
+| Temporal context | History length 1 in the paper | Trained on 4-step sequences; rollout retains up to 3 tokens |
+| Action conditioning | AdaLN-zero at every Transformer layer | Concatenate latent and encoded action, then project once |
+| Position signal | Learned positional embedding | No absolute positional embedding; order comes from recurrence |
+| Output | Transformer prediction projector | Residual delta, `z_hat_next = z + delta_z` |
+
+This variant is aimed at smooth navigation: recurrence carries short-term
+motion through the doorway, while residual prediction biases the dynamics
+toward small latent changes.
+
+#### PushT
+
+![Hand-drawn PushT architecture comparison](assets/architecture/pusht-lewm-vs-rwkv-v22.png)
+
+| Design choice | Official LeWM | RWKV-LeWM PushT v22 |
+| --- | --- | --- |
+| Temporal predictor | 6-layer causal Transformer | 11 RWKV-v7 blocks, width 192 |
+| Temporal context | History length 3 | Sliding 3-token context |
+| Action conditioning | AdaLN-zero at every Transformer layer | Add current action at the input plus a zero-initialized 3-action history branch |
+| Position signal | Learned positional embedding | None |
+| Output | LeWM prediction projector | Same style of projector, direct next-latent prediction |
+
+For v22, `alpha` in the history branch is trainable and initialized to `0.1`.
+The `current` and `past` variants test whether duplicating the present action in
+that branch helps contact-sensitive dynamics.
+
 ### Objective
 
 Training uses four model steps: three context steps and one prediction step.
@@ -103,9 +153,12 @@ latent space, and minimizes terminal latent distance:
 cost(actions) = ||z_hat_H(actions) - z_goal||^2
 ```
 
-The reported protocol uses 300 candidates, 30 CEM refinement steps, top-30
-elite selection, a five-step model horizon, five raw actions per action block,
-and an environment budget of 50 raw steps.
+All evaluations use 300 candidates, top-30 elite selection, a five-step model
+horizon, and five raw actions per action block. Following the paper, TwoRoom
+uses 10 CEM refinement steps and PushT uses 30. PushT is compared at goal
+offset 25 and budget 50 on both sides. The available RWKV-LeWM TwoRoom run uses
+offset 25 and budget 50, whereas the paper reports offset 100 and budget 150;
+that result is therefore not protocol-matched.
 
 ## Data
 
@@ -196,8 +249,9 @@ Additional Hydra overrides may be appended after it.
 
 ### TwoRoom training
 
-The paper-aligned TwoRoom run uses four GPUs, DeepSpeed ZeRO-2, global batch
-size 128, two warm-up epochs, and an eight-epoch continuation:
+The TwoRoom run uses the official dataset and training-scale settings: four
+GPUs, DeepSpeed ZeRO-2, global batch size 128, two warm-up epochs, and an
+eight-epoch continuation:
 
 ```bash
 export STABLEWM_HOME=/path/to/stable-wm-data
@@ -208,18 +262,73 @@ bash eval_tworoom.sh outputs/tworoom_stage2_ds/epoch_8
 
 ## Results
 
-All numbers below use 50 evaluation episodes, seed 42, goal offset 25, budget
-50, horizon 5, action block 5, 300 CEM candidates, 30 CEM steps, and top-k 30.
-They are read from the generated evaluation JSON files in the local `outputs/`
-directory.
+### Comparison with official LeWM
 
-| Task | Model / variant | Selected checkpoint | Successes | Success rate |
-| --- | --- | --- | ---: | ---: |
-| TwoRoom | RWKV-LeWM baseline | stage 2, epoch 8 | 46 / 50 | **92%** |
-| PushT | v22 action history, current included | stage 2, epoch 9 | 41 / 50 | **82%** |
-| PushT | v22 action history, past only | stage 2, epoch 8 | 41 / 50 | **82%** |
-| PushT | v22 action history, current included | stage 2, epoch 10 | 35 / 50 | 70% |
-| PushT | v22 action history, past only | stage 2, epoch 10 | 35 / 50 | 70% |
+The official reference values come from the
+[LeWM paper](https://arxiv.org/abs/2603.19312) and its
+[official implementation](https://github.com/lucas-maes/le-wm). Both sides use
+50 evaluation episodes, horizon 5, action block 5, 300 CEM candidates, and
+top-k 30. Task-specific settings and reporting differences are shown rather
+than hidden:
+
+| Task and reporting point | LeWM paper protocol | Official LeWM | RWKV-LeWM protocol | RWKV-LeWM | Nominal difference |
+| --- | --- | ---: | --- | ---: | ---: |
+| TwoRoom, seed 42 reference | Offset 100, budget 150, CEM 10 | 87% | Offset 25, budget 50, CEM 10 | **96% (48/50)**, epoch 7 | +9 pp† |
+| TwoRoom, five RWKV evaluation seeds | Same published reference | 87% | Offset 25, budget 50, CEM 10 | **92.8% mean**, range 90–96% | +5.8 pp† |
+| PushT, best selected checkpoint | Offset 25, budget 50, CEM 30 | **96.0 ± 2.83%** | Offset 25, budget 50, CEM 30 | 82% (41/50) | **−14 pp** |
+| PushT, final epoch 10 | Offset 25, budget 50, CEM 30 | **96.0 ± 2.83%** | Offset 25, budget 50, CEM 30 | 70% (35/50) | **−26 pp** |
+
+† The TwoRoom percentages are deliberately shown because they are the only
+available results, but they are **not a matched ranking**: the goal distance
+and control budget differ. No claim that RWKV-LeWM outperforms LeWM on
+TwoRoom should be inferred from the nominal percentage difference.
+
+The TwoRoom sweep varies evaluation/CEM seeds `0–4` on one trained epoch-7
+checkpoint; it is not five independent training seeds. Its individual rates
+are 92%, 96%, 96%, 90%, and 90%. The paper reports one 87% TwoRoom value. For
+PushT, LeWM reports a mean over three training seeds evaluated on the same 50
+trajectories, whereas RWKV-LeWM has one training run and a selected checkpoint.
+
+For completeness, the TwoRoom stage-2 epoch-8 checkpoint scored 92% (46/50)
+under the local offset-25/budget-50 setup with 30 CEM iterations. At epoch 7,
+raising CEM from 10 to 30 iterations did not improve the five-evaluation-seed
+mean (92.8% versus 91.6%). These are useful robustness checks within the local
+protocol, not substitutes for the missing offset-100/budget-150 evaluation.
+
+### Interpreting the differences
+
+**TwoRoom.** The present numbers cannot isolate an architecture effect because
+the evaluation tasks differ: the paper samples the goal 100 steps ahead with a
+150-step budget, while the local result uses 25 and 50. Architectural changes
+also move together. RWKV-LeWM uses up to three context tokens rather than the
+paper's history length of one, and its residual delta head is a natural bias
+for smooth, low-dimensional motion. The LeWM paper additionally notes that the
+dataset's low diversity and intrinsic dimensionality may make SIGReg's
+high-dimensional isotropic Gaussian target harder to match. These are
+hypotheses to test after running the same offset-100/budget-150 evaluation, not
+explanations established by the current percentages.
+
+**PushT.** The −14 pp best-checkpoint gap suggests that the current replacement
+is less effective on contact-rich, action-sensitive dynamics. LeWM injects the
+action through AdaLN-zero at every Transformer layer, while v22 fuses it mainly
+at the RWKV input with a small history branch. LeWM also gives causal attention
+explicit access to three position-embedded tokens; v22 depends on recurrence
+without absolute positions. Finally, MPC currently recomputes a sliding
+three-token window instead of carrying a true RWKV recurrent state, so it does
+not yet realize the intended stateful rollout advantage. The drop from 82% at
+the selected checkpoint to 70% at epoch 10 further indicates training and
+checkpoint-selection instability.
+
+The clean next experiment is therefore a controlled ablation that keeps LeWM's
+history, action conditioning, predictor width, and prediction head fixed while
+changing only the Transformer/RWKV temporal mixer, followed by multiple
+independent training seeds.
+
+### RWKV-LeWM development history
+
+The two v22 action-history variants reached the same best score: `current` at
+stage 2 epoch 9 and `past` at stage 2 epoch 8, both 82% (41/50). Both final
+epoch-10 checkpoints scored 70% (35/50).
 
 Selected PushT development milestones under the same evaluation protocol:
 
@@ -230,15 +339,16 @@ Selected PushT development milestones under the same evaluation protocol:
 | v21 | Per-channel scaled action injection | 80% |
 | v22 | Causal three-block action-history summary | **82%** |
 
-These are checkpoint-selection results from one evaluation seed, not confidence
-intervals or multi-seed averages. The final epoch is not always the best MPC
-checkpoint, as the v22 results make explicit. Checkpoints, raw logs, datasets,
-and `outputs/` are intentionally excluded from Git because they are large.
+These development numbers are checkpoint-selection results from one evaluation
+seed, not confidence intervals or multi-seed averages. Checkpoints, raw logs,
+datasets, and `outputs/` are intentionally excluded from Git because they are
+large.
 
 ## Repository layout
 
 ```text
 config/                         Hydra train/eval and DeepSpeed configs
+assets/architecture/            Hand-drawn model and task comparison diagrams
 src/rwkv_lewm/                  Model, losses, encoders, and dynamics backends
 src/rwkv_lewm/backends/         Vendored RWKV-v7 model implementation
 scripts/                        Data, training, evaluation, and diagnostics
@@ -250,8 +360,10 @@ train_deepspeed.py              Four-GPU DeepSpeed trainer
 
 ## Known limitations
 
-- The best PushT checkpoint was selected on one 50-episode, seed-42 evaluation;
-  a multi-seed test set is still needed.
+- PushT has one RWKV-LeWM training run; independent training-seed statistics
+  comparable to LeWM's three-seed result are still needed.
+- The TwoRoom five-seed number varies evaluation randomness for one checkpoint,
+  not training randomness.
 - The CUDA backend currently exposes sequence-oriented kernels. MPC keeps a
   three-token sliding context instead of using a true one-step recurrent kernel.
 - Only TwoRoom and PushT have completed result tables.
@@ -262,7 +374,8 @@ train_deepspeed.py              Four-GPU DeepSpeed trainer
 ## Acknowledgements
 
 This project builds on the official
-[LeWorldModel code and protocol](https://github.com/lucas-maes/le-wm),
+[LeWorldModel paper](https://arxiv.org/abs/2603.19312) and
+[code and protocol](https://github.com/lucas-maes/le-wm),
 [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel),
 [stable-pretraining](https://github.com/galilai-group/stable-pretraining), and
 the official [RWKV-v7 implementation](https://github.com/BlinkDL/RWKV-LM/tree/main/RWKV-v7).
